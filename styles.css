@@ -116,3 +116,12 @@ span{
   display: flex;
   flex-direction: column;
 }
+.select-time{
+  padding:5px 10px;
+  cursor:pointer;
+}
+
+.select-time.selected{
+  background-color: rgb(39, 39, 42);
+  border-radius: 5px;
+}
