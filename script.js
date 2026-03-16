@@ -35,13 +35,25 @@ times.forEach(time=>{
 
 function start(){
   inputBox.addEventListener("keydown", function(event){
+    
+    if(seconds >= getMaxTime()){
+      event.preventDefault();
+      inputBox.textContent="";
+      return;
+    }
     if(!timestarted && event.key.length === 1){
       timestarted=true;
-      timer = setInterval(function() {
-        seconds++;
-        counter.textContent = `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
-      }, 1000);
-    }
+      seconds = getMaxTime();
+
+    timer = setInterval(function() {
+      seconds--;
+
+      counter.textContent = `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
+
+      if(seconds <= 0){
+        endTest();
+      }
+    }, 1000);}
     
     if(event.key === " "){
       event.preventDefault();
@@ -49,6 +61,111 @@ function start(){
     
     Test(event);
   });
+}
+
+function getMaxTime() {
+  let maxtime = 60;
+  const selected = document.querySelector(".select-time.selected");
+  if(selected) {
+    const txt = selected.textContent.trim();
+    if(txt.includes(":")) {
+      let parts = txt.split(":");
+      maxtime = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+    } else {
+      maxtime = parseInt(txt) * 60 || 60;
+    }
+  }
+  return maxtime;
+}
+
+function endTest() {
+  clearInterval(timer);
+  
+  if(userWord.trim() !== ""){
+    wc++;
+    let words = paras[num].trim().split(/\s+/);
+    if(userWord.trim() === words[i]) {
+      cwc++;
+    } else {
+      wwc++;
+    }
+  }
+  
+  const elapsed = getMaxTime() - seconds;
+  const wpm = elapsed > 0 ? Math.floor((cwc / elapsed) * 60) : 0;
+  const raw  = elapsed > 0 ? Math.floor((wc / elapsed) * 60) : 0;
+  const acc  = (wc > 0) ? Math.floor((cwc / wc) * 100) : 100;
+
+  dispSpeed.textContent    = `${wpm} WPM`;
+  dispRawSpeed.textContent = `${raw} WPM`;
+  dispAccuracy.textContent = `${acc}%`;
+  dispCC.textContent       = `${cwc}`;
+  dispWC.textContent       = `${wwc}`;
+
+  inputBox.disabled = true;
+
+}
+
+function reset(){
+  num = Math.floor(Math.random() * paras.length);
+  const Para = document.querySelector('.para');
+  Para.textContent = paras[num];
+  wc=0;
+  cwc=0;
+  wwc=0;
+  i=0;
+  userWord="";
+  seconds=0;
+  timestarted=false;
+  clearInterval(timer);
+  inputBox.value = "";
+  updatespeed();
+  
+  const selected = document.querySelector(".select-time.selected");
+  if(selected) counter.textContent = selected.textContent;
+  else counter.textContent = "1:00"; 
+  
+  inputBox.disabled = false;
+}
+
+function Test(event){
+  let words = paras[num].trim().split(/\s+/);
+  
+
+  if(event.key === " "){
+    let typed = userWord.trim();
+    
+    if(typed === words[i]){
+      wc++;
+      cwc++;
+      updatespeed();
+    }
+    else{
+      wwc++;
+      wc++;
+    }
+
+    inputBox.value = "";
+    i++;
+    userWord = "";
+    
+    if(i >= words.length){
+      endTest();
+    }
+  }
+  else if(event.key.length === 1){
+    userWord += event.key;
+  }
+}
+
+function updatespeed(){
+  const elapsed = getMaxTime() - seconds;
+  if(elapsed > 0){
+    speed.textContent = `${Math.floor((cwc / elapsed) * 60)} WPM`;
+  }
+  else{
+    speed.textContent = "0 WPM";
+  }
 }
 
 let paras = [
@@ -80,92 +197,5 @@ let paras = [
   Build habits that support your goals.`,
   
   `Every challenge is an opportunity to grow.
-  Believe in your ability to learn.`];
-
-function reset(){
-  num = Math.floor(Math.random() * paras.length);
-  const Para = document.querySelector('.para');
-  Para.textContent = paras[num];
-  wc=0;
-  cwc=0;
-  wwc=0;
-  i=0;
-  userWord="";
-  seconds=0;
-  timestarted=false;
-  clearInterval(timer);
-  inputBox.value = "";
-  updatespeed();
-  
-  const selected = document.querySelector(".select-time.selected");
-  if(selected) counter.textContent = selected.textContent;
-  else counter.textContent = "1:00";  // fallback
-}
-
-function Test(event){
-  let words = paras[num].trim().split(/\s+/);
-  
-  let maxtime = 60;
-  const selected = document.querySelector(".select-time.selected");
-  if(selected && selected.textContent.includes(":")) {
-    let parts = selected.textContent.split(":");
-    maxtime = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-  } else if(selected) {
-    maxtime = parseInt(selected.textContent) * 60 || 60;
-  }
-
-  if(seconds >= maxtime){
-    clearInterval(timer);
-    if(userWord.trim() !== ""){
-      wc++;
-      if(userWord === words[i]) cwc++;
-      else wwc++;
-    }
-    
-    dispSpeed.textContent    = `${Math.floor((cwc / seconds) * 60)} WPM`;
-    dispRawSpeed.textContent = `${Math.floor((wc  / seconds) * 60)} WPM`;
-    dispAccuracy.textContent = seconds > 0 ? `${Math.floor((cwc / wc) * 100)}%` : "100%";
-    dispCC.textContent = `${cwc}`;
-    dispWC.textContent = `${wwc}`;
-    return;
-  }
-
-  if(event.key === " "){
-    let typed = userWord.trim();
-    
-    if(typed === words[i]){
-      wc++;
-      cwc++;
-      updatespeed();
-    }
-    else{
-      wwc++;
-      wc++;
-    }
-
-    inputBox.value = "";
-    i++;
-    userWord = "";
-    
-    if(i >= words.length){
-      clearInterval(timer);
-      dispSpeed.textContent    = `${Math.floor((cwc / seconds) * 60)} WPM`;
-      dispRawSpeed.textContent = `${Math.floor((wc  / seconds) * 60)} WPM`;
-      dispAccuracy.textContent = seconds > 0 ? `${Math.floor((cwc / wc) * 100)}%` : "100%";
-      dispCC.textContent = `${cwc}`;
-      dispWC.textContent = `${wc}`;
-    }
-  }
-  else if(event.key.length === 1){
-    userWord += event.key;
-  }
-}
-
-function updatespeed(){
-  if(seconds > 0){
-    speed.textContent = `${Math.floor((cwc / seconds) * 60)} WPM`;
-  }
-  else{
-    speed.textContent = "0 WPM";
-  }
-}
+  Believe in your ability to learn.`
+];
