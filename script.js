@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showTimer.forEach(t => t.classList.remove("selected"));
       show.classList.add("selected");
       if(showTimer.textContent == "Hide"){
-        counter.textContent="";
+        counter.textContent=" ";
 
       }
     });
