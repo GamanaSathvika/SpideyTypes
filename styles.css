@@ -125,3 +125,12 @@ span{
   background-color: rgb(39, 39, 42);
   border-radius: 5px;
 }
+.select-timer{
+  padding:5px 10px;
+  cursor:pointer;
+}
+
+.select-timer.selected{
+  background-color: rgb(39, 39, 42);
+  border-radius: 5px;
+}

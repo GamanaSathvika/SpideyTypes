@@ -33,6 +33,7 @@ times.forEach(time=>{
   });
 });
 
+
 function start(){
   inputBox.addEventListener("keydown", function(event){
     
@@ -199,3 +200,19 @@ let paras = [
   `Every challenge is an opportunity to grow.
   Believe in your ability to learn.`
 ];
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const showTimer = document.querySelectorAll(".select-timer");
+
+  showTimer.forEach(show => {
+    show.addEventListener("click", () => {
+      showTimer.forEach(t => t.classList.remove("selected"));
+      show.classList.add("selected");
+      if(showTimer.textContent == "Hide"){
+        counter.textContent=" ";
+
+      }
+    });
+  });
+});
