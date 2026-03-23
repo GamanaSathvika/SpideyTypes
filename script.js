@@ -33,6 +33,33 @@ times.forEach(time=>{
   });
 });
 
+const showTimer = document.querySelectorAll(".select-timer");
+showTimer.forEach(show => {
+  show.addEventListener("click", () => {
+    showTimer.forEach(t => t.classList.remove("selected"));
+    show.classList.add("selected");
+
+    if (show.textContent.trim() === "Hide") {
+      counter.style.color = "transparent";
+    } else {
+      counter.style.color = "aliceblue";
+    }
+  });
+});
+
+const showSpeed = document.querySelectorAll(".select-wpm");
+showSpeed.forEach(show =>{
+  show.addEventListener("click",()=>{
+    showSpeed.forEach(t => t.classList.remove("selected"));
+    show.classList.add("selected");
+    if (show.textContent.trim() === "Hide") {
+      speed.style.color = "transparent";
+    } else {
+      speed.style.color = "aliceblue";
+    }
+  })
+})
+
 
 function start(){
   inputBox.addEventListener("keydown", function(event){
@@ -202,17 +229,5 @@ let paras = [
 ];
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const showTimer = document.querySelectorAll(".select-timer");
 
-  showTimer.forEach(show => {
-    show.addEventListener("click", () => {
-      showTimer.forEach(t => t.classList.remove("selected"));
-      show.classList.add("selected");
-      if(showTimer.textContent == "Hide"){
-        counter.textContent=" ";
 
-      }
-    });
-  });
-});

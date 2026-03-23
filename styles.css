@@ -134,3 +134,13 @@ span{
   background-color: rgb(39, 39, 42);
   border-radius: 5px;
 }
+.select-wpm{
+  padding:5px 10px;
+  cursor:pointer;
+}
+
+.select-wpm.selected{
+  background-color: rgb(39, 39, 42);
+  border-radius: 5px;
+}
+
