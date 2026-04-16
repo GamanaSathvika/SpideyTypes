@@ -1,138 +1,139 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <title>SpideyTypes</title>
-  <link rel="icon" type="image/png" href="images/IMG.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <nav class="nav-bar">
-      <img class="logo" src="images/logo2.png">
+<header>
+  <nav class="nav-bar">
+    <div class="logo-text">SPIDEY<span>TYPES</span></div>
+    <div style="display:flex;gap:32px">
       <a>TypeTest</a>
-      <a>Leader Board</a>
+      <a>Leaderboard</a>
       <a>Games</a>
-    </nav>
-  </header>
+    </div>
+  </nav>
+</header>
+
+<div class="main">
+
+  <!-- PARAGRAPH DISPLAY -->
   <div class="text-box">
-    <p class="para"></p>
+    <p class="para" id="para"></p>
   </div>
+
+  <!-- INPUT ROW -->
   <div class="type-box">
-    <input class="input-box" type="text"> 
-    <div class="wpm"> 
-      <p class="txt-speed">0 WPM</p>
-    </div>
-    <div class="counter">
-      <p class="txt-counter">1:00</p>
-    </div>
-    <button class="reset-btn"> 
-      <img class="reset-img" src="images/reset1.png">
-    </button>
+    <input class="input-box" id="inputBox" type="text" placeholder="Start typing to begin…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="stat-chip" id="wpmChip">0 WPM</div>
+    <div class="stat-chip" id="counterChip">1:00</div>
+    <button class="reset-btn" id="resetBtn" title="Reset (Esc)">↺</button>
   </div>
+
+  <!-- RESULTS + SETTINGS -->
   <div class="result-box">
-    <div class="results">
-      <p class="speed-txt-disp">0 WPM</p>
-      <div class="info1">
-        <p >Raw WPM </p>
-        <p class="rawspeed-disp">-</p> 
-      </div>
-      <div class="info2" >
-        <p >Accuracy </p>
-        <p class="accuracy-disp">-</p> 
-      </div>
-      <div class="info1">
-        <p>Correct Characters </p>
-        <p class="cc-disp">-</p> 
-      </div>
-      <div class="info2">
-        <p>Incorrect Characters </p>
-        <p class="wc-disp">-</p> 
-      </div>
+
+    <!-- Results -->
+    <div class="results-panel">
+      <div class="wpm-main" id="dispSpeed">—</div>
+      <div class="wpm-label">WPM</div>
+      <div class="stat-row"><span class="label">Raw WPM</span><span class="value" id="dispRaw">—</span></div>
+      <div class="stat-row"><span class="label">Accuracy</span><span class="value" id="dispAcc">—</span></div>
+      <div class="stat-row"><span class="label">Correct Words</span><span class="value" id="dispCC">—</span></div>
+      <div class="stat-row"><span class="label">Incorrect Words</span><span class="value" id="dispWC">—</span></div>
     </div>
-    <div class="settings">
-      <div class="settings-optn">
-        <p>Language</p>
-        <div class="select-box">
-          <select>
-            <option>Select test language</option>
-            <option>English</option>
-            <option>Dutch</option>
-            <option>French</option>
-            <option>German</option>
-          </select>
-        </div>
-        
+
+    <!-- Settings -->
+    <div class="settings-panel">
+      <div class="settings-title">Settings</div>
+
+      <div class="setting-row">
+        <span class="setting-label">Language</span>
+        <select class="lang-select" id="langSelect">
+          <option value="english">English</option>
+          <option value="dutch">Dutch</option>
+          <option value="french">French</option>
+          <option value="german">German</option>
+        </select>
       </div>
-      <div class="settings-optn">
-        <p>Test Duration</p>
-        <div>
-          <span class="select-time">0:10</span>
-          <span class="select-time">0:30</span>
-          <span class="select-time selected">1:00</span>
-          <span class="select-time">2:00</span>
-          <span class="select-time">5:00</span>
-        </div>
-        
-      </div>
-      <div  class="settings-optn">
-        <p>Highlight Style</p>
-        <div>
-          <span>Character</span>
-          <span>Word</span>
-          <span>Caret</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Duration</span>
+        <div class="btn-group" id="durationGroup">
+          <button class="opt-btn select-time" data-val="10">0:10</button>
+          <button class="opt-btn select-time" data-val="30">0:30</button>
+          <button class="opt-btn select-time selected" data-val="60">1:00</button>
+          <button class="opt-btn select-time" data-val="120">2:00</button>
+          <button class="opt-btn select-time" data-val="300">5:00</button>
         </div>
       </div>
-      <div class="settings-optn">
-        <p>Highlight Input on Error</p>
-        <div>
-          <span>On</span>
-          <span>Off</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Highlight</span>
+        <div class="btn-group" id="highlightGroup">
+          <button class="opt-btn selected" data-mode="char">Char</button>
+          <button class="opt-btn" data-mode="word">Word</button>
+          <button class="opt-btn" data-mode="caret">Caret</button>
         </div>
-        
       </div>
-      <div class="settings-optn">
-        <p>Words List</p>
-        <div>
-          <span>Simple</span>
-          <span>Advanced</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Error Flash</span>
+        <div class="btn-group" id="errorGroup">
+          <button class="opt-btn selected" data-val="on">On</button>
+          <button class="opt-btn" data-val="off">Off</button>
         </div>
-        
       </div>
-      <div class="settings-optn">
-        <p>Punctuation</p>
-        <div>
-          <span>On</span>
-          <span>Off</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Words</span>
+        <div class="btn-group" id="wordsGroup">
+          <button class="opt-btn selected" data-val="simple">Simple</button>
+          <button class="opt-btn" data-val="advanced">Advanced</button>
         </div>
-        
       </div>
-      <div class="settings-optn">
-        <p>Numbers</p>
-        <div>
-          <span>On</span>
-          <span>Off</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Punctuation</span>
+        <div class="btn-group" id="punctGroup">
+          <button class="opt-btn" data-val="on">On</button>
+          <button class="opt-btn selected" data-val="off">Off</button>
         </div>
-        
       </div>
-      <div class="settings-optn">
-        <p>Show WPM</p>
-        <div>
-          <span class="select-wpm selected">Show</span>
-          <span class="select-wpm">Hide</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Numbers</span>
+        <div class="btn-group" id="numbersGroup">
+          <button class="opt-btn" data-val="on">On</button>
+          <button class="opt-btn selected" data-val="off">Off</button>
         </div>
-        
       </div>
-      <div class="settings-optn">
-        <p>Show Timer</p>
-        <div>
-          <span class="select-timer selected">Show</span>
-          <span class="select-timer">Hide</span>
+
+      <div class="setting-row">
+        <span class="setting-label">Show WPM</span>
+        <div class="btn-group" id="wpmGroup">
+          <button class="opt-btn selected" data-val="show">Show</button>
+          <button class="opt-btn" data-val="hide">Hide</button>
         </div>
-        
       </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Show Timer</span>
+        <div class="btn-group" id="timerGroup">
+          <button class="opt-btn selected" data-val="show">Show</button>
+          <button class="opt-btn" data-val="hide">Hide</button>
+        </div>
+      </div>
+
     </div>
   </div>
-  <script src="script.js"></script>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"> </script>
 </body>
 </html>

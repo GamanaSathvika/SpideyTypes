@@ -1,233 +1,388 @@
-window.onload = function(){
-  reset();
-  start();
+// ═══════════════════════════════════════════════
+//  WORD BANKS
+// ═══════════════════════════════════════════════
+const wordBanks = {
+  english: {
+    simple: ["the","quick","brown","fox","jumps","over","lazy","dog","cat","sat","mat","hat","run","fun","sun","cup","pup","map","cap","tap","big","pig","dig","fig","wig","jig","log","fog","hog","cog","top","mop","hop","pop","cop","bed","red","fed","led","ned","bit","hit","sit","fit","kit","bus","gus","bun","gun","nun","run"],
+    advanced: ["algorithm","synchronize","persistent","development","architecture","infrastructure","comprehensive","optimization","visualization","authentication","implementation","configuration","differentiation","sophisticated","revolutionary","entrepreneurship","collaboration","documentation","accessibility","customization"]
+  },
+  dutch: {
+    simple: ["de","het","een","van","en","in","is","dat","op","te","met","zijn","voor","niet","aan","er","maar","om","door","ze"],
+    advanced: ["ontwikkeling","samenwerking","beschikbaarheid","verantwoordelijkheid","organisatie","administratie","communicatie","infrastructuur","implementatie","documentatie"]
+  },
+  french: {
+    simple: ["le","la","les","un","une","des","de","du","et","en","est","pas","que","qui","sur","par","avec","son","au","je"],
+    advanced: ["développement","organisation","administration","communication","infrastructure","documentation","accessibilité","optimisation","visualisation","configuration"]
+  },
+  german: {
+    simple: ["der","die","das","ein","und","ist","in","von","zu","mit","sich","des","auf","für","nicht","auch","an","er","sie","es"],
+    advanced: ["Entwicklung","Zusammenarbeit","Verfügbarkeit","Verantwortung","Organisation","Infrastruktur","Dokumentation","Optimierung","Konfiguration","Implementierung"]
+  }
 };
 
-const resetBtn = document.querySelector('.reset-btn');
-const inputBox = document.querySelector('.input-box');
-const speed = document.querySelector('.txt-speed');
-const times = document.querySelectorAll(".select-time");
-const counter= document.querySelector(".txt-counter");
-const dispSpeed = document.querySelector(".speed-txt-disp");
-const dispRawSpeed = document.querySelector(".rawspeed-disp");
-const dispAccuracy = document.querySelector(".accuracy-disp");
-const dispCC = document.querySelector(".cc-disp");
-const dispWC = document.querySelector(".wc-disp");
+const punctChars = [".", ",", "!", "?", ";", ":"];
+const numberWords = ["0","1","2","3","4","5","6","7","8","9","10","100","42","365","2024"];
 
-resetBtn.addEventListener("click", reset);
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let settings = {
+  duration: 60,
+  highlight: "char",   // char | word | caret
+  errorFlash: true,
+  wordList: "simple",
+  punctuation: false,
+  numbers: false,
+  showWpm: true,
+  showTimer: true,
+  language: "english"
+};
 
-let num;
-let i=0;
-let wc=0, cwc=0, wwc=0;
-let userWord="";
-let timestarted=false;
-let seconds=0;
-let timer=null;
+let words = [];
+let wordIndex = 0;
+let charIndex = 0;
+let wc = 0, cwc = 0, wwc = 0;
+let timestarted = false;
+let seconds = 0;
+let timer = null;
+let testDone = false;
 
+// ═══════════════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════════════
+const paraEl     = document.getElementById('para');
+const inputBox   = document.getElementById('inputBox');
+const wpmChip    = document.getElementById('wpmChip');
+const counterChip= document.getElementById('counterChip');
+const resetBtn   = document.getElementById('resetBtn');
+const dispSpeed  = document.getElementById('dispSpeed');
+const dispRaw    = document.getElementById('dispRaw');
+const dispAcc    = document.getElementById('dispAcc');
+const dispCC     = document.getElementById('dispCC');
+const dispWC     = document.getElementById('dispWC');
+const toastEl    = document.getElementById('toast');
 
-times.forEach(time=>{
-  time.addEventListener("click", ()=>{
-    times.forEach(t=>t.classList.remove("selected"));
-    time.classList.add("selected");
-    counter.textContent = time.textContent;
-  });
-});
-
-const showTimer = document.querySelectorAll(".select-timer");
-showTimer.forEach(show => {
-  show.addEventListener("click", () => {
-    showTimer.forEach(t => t.classList.remove("selected"));
-    show.classList.add("selected");
-
-    if (show.textContent.trim() === "Hide") {
-      counter.style.color = "transparent";
-    } else {
-      counter.style.color = "aliceblue";
-    }
-  });
-});
-
-const showSpeed = document.querySelectorAll(".select-wpm");
-showSpeed.forEach(show =>{
-  show.addEventListener("click",()=>{
-    showSpeed.forEach(t => t.classList.remove("selected"));
-    show.classList.add("selected");
-    if (show.textContent.trim() === "Hide") {
-      speed.style.color = "transparent";
-    } else {
-      speed.style.color = "aliceblue";
-    }
-  })
-})
-
-
-function start(){
-  inputBox.addEventListener("keydown", function(event){
-    
-    if(seconds >= getMaxTime()){
-      event.preventDefault();
-      inputBox.textContent="";
-      return;
-    }
-    if(!timestarted && event.key.length === 1){
-      timestarted=true;
-      seconds = getMaxTime();
-
-    timer = setInterval(function() {
-      seconds--;
-
-      counter.textContent = `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
-
-      if(seconds <= 0){
-        endTest();
-      }
-    }, 1000);}
-    
-    if(event.key === " "){
-      event.preventDefault();
-    }
-    
-    Test(event);
-  });
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
 }
 
-function getMaxTime() {
-  let maxtime = 60;
-  const selected = document.querySelector(".select-time.selected");
-  if(selected) {
-    const txt = selected.textContent.trim();
-    if(txt.includes(":")) {
-      let parts = txt.split(":");
-      maxtime = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-    } else {
-      maxtime = parseInt(txt) * 60 || 60;
+// ═══════════════════════════════════════════════
+//  GENERATE WORD LIST
+// ═══════════════════════════════════════════════
+function generateWords(count = 60) {
+  const bank = [...wordBanks[settings.language][settings.wordList]];
+  let pool = [];
+
+  for (let i = 0; i < count; i++) {
+    let w = bank[Math.floor(Math.random() * bank.length)];
+    if (settings.numbers && Math.random() < 0.15) {
+      w = numberWords[Math.floor(Math.random() * numberWords.length)];
     }
+    if (settings.punctuation && Math.random() < 0.2) {
+      w += punctChars[Math.floor(Math.random() * punctChars.length)];
+    }
+    pool.push(w);
   }
-  return maxtime;
+  return pool;
 }
 
+// ═══════════════════════════════════════════════
+//  RENDER PARAGRAPH
+// ═══════════════════════════════════════════════
+function renderPara() {
+  paraEl.innerHTML = '';
+  words.forEach((word, wi) => {
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'word' + (wi === wordIndex ? ' current-word' : '');
+    wordSpan.dataset.wi = wi;
+
+    [...word].forEach((ch, ci) => {
+      const charSpan = document.createElement('span');
+      charSpan.className = 'char';
+      charSpan.dataset.wi = wi;
+      charSpan.dataset.ci = ci;
+      charSpan.textContent = ch;
+      wordSpan.appendChild(charSpan);
+    });
+
+    // caret mode: add caret span at end of current word
+    if (settings.highlight === 'caret' && wi === wordIndex) {
+      const caret = document.createElement('span');
+      caret.className = 'char current';
+      caret.textContent = '';
+      caret.style.borderLeft = '2px solid var(--caret)';
+      caret.style.animation = 'blink 0.9s step-end infinite';
+      wordSpan.appendChild(caret);
+    }
+
+    paraEl.appendChild(wordSpan);
+    if (wi < words.length - 1) paraEl.appendChild(document.createTextNode(' '));
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  UPDATE CHAR HIGHLIGHTING
+// ═══════════════════════════════════════════════
+function updateHighlight(typed) {
+  if (settings.highlight === 'word') {
+    // just highlight current word block — no per-char coloring
+    document.querySelectorAll('.word').forEach((w, wi) => {
+      w.className = 'word' + (wi === wordIndex ? ' current-word' : '');
+    });
+    return;
+  }
+
+  if (settings.highlight === 'caret') {
+    // show caret position only
+    document.querySelectorAll('.char').forEach(c => c.classList.remove('current','correct','wrong'));
+    const wordSpan = paraEl.querySelector(`.word[data-wi="${wordIndex}"]`);
+    if (!wordSpan) return;
+    const chars = wordSpan.querySelectorAll('.char');
+    const pos = Math.min(typed.length, chars.length - 1);
+    if (chars[pos]) chars[pos].classList.add('current');
+    return;
+  }
+
+  // CHAR mode: color each character
+  const wordSpan = paraEl.querySelector(`.word[data-wi="${wordIndex}"]`);
+  if (!wordSpan) return;
+  const chars = wordSpan.querySelectorAll('.char');
+
+  chars.forEach((c, ci) => {
+    c.classList.remove('correct', 'wrong', 'current');
+    if (ci < typed.length) {
+      c.classList.add(typed[ci] === c.textContent ? 'correct' : 'wrong');
+    } else if (ci === typed.length) {
+      c.classList.add('current');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  GET MAX TIME
+// ═══════════════════════════════════════════════
+function getMaxTime() { return settings.duration; }
+
+// ═══════════════════════════════════════════════
+//  FORMAT TIME
+// ═══════════════════════════════════════════════
+function fmtTime(s) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// ═══════════════════════════════════════════════
+//  START TIMER
+// ═══════════════════════════════════════════════
+function startTimer() {
+  timestarted = true;
+  seconds = getMaxTime();
+  timer = setInterval(() => {
+    seconds--;
+    counterChip.textContent = fmtTime(seconds);
+    updateLiveWpm();
+    if (seconds <= 0) endTest();
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════
+//  LIVE WPM
+// ═══════════════════════════════════════════════
+function updateLiveWpm() {
+  const elapsed = getMaxTime() - seconds;
+  if (elapsed > 0 && settings.showWpm) {
+    wpmChip.textContent = `${Math.floor((cwc / elapsed) * 60)} WPM`;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  END TEST
+// ═══════════════════════════════════════════════
 function endTest() {
   clearInterval(timer);
-  
-  if(userWord.trim() !== ""){
+  testDone = true;
+  inputBox.disabled = true;
+
+  // count last partial word
+  const typed = inputBox.value.trim();
+  if (typed && wordIndex < words.length) {
     wc++;
-    let words = paras[num].trim().split(/\s+/);
-    if(userWord.trim() === words[i]) {
+    if (typed === words[wordIndex]) cwc++; else wwc++;
+  }
+
+  const elapsed = getMaxTime() - seconds;
+  const wpm = elapsed > 0 ? Math.floor((cwc / elapsed) * 60) : 0;
+  const raw  = elapsed > 0 ? Math.floor((wc  / elapsed) * 60) : 0;
+  const acc  = wc > 0 ? Math.floor((cwc / wc) * 100) : 100;
+
+  dispSpeed.textContent = `${wpm}`;
+  dispRaw.textContent   = `${raw} WPM`;
+  dispAcc.textContent   = `${acc}%`;
+  dispCC.textContent    = `${cwc}`;
+  dispWC.textContent    = `${wwc}`;
+
+  wpmChip.textContent = `${wpm} WPM`;
+}
+
+// ═══════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════
+function reset() {
+  clearInterval(timer);
+  wc = 0; cwc = 0; wwc = 0;
+  wordIndex = 0; charIndex = 0;
+  timestarted = false; testDone = false;
+  seconds = 0;
+  inputBox.value = '';
+  inputBox.disabled = false;
+  inputBox.classList.remove('error-highlight');
+  wpmChip.textContent = '0 WPM';
+  wpmChip.style.opacity = settings.showWpm ? '1' : '0';
+  counterChip.textContent = fmtTime(getMaxTime());
+  counterChip.style.opacity = settings.showTimer ? '1' : '0';
+  dispSpeed.textContent = '—';
+  dispRaw.textContent = '—';
+  dispAcc.textContent = '—';
+  dispCC.textContent = '—';
+  dispWC.textContent = '—';
+  words = generateWords(80);
+  renderPara();
+  inputBox.focus();
+}
+
+// ═══════════════════════════════════════════════
+//  INPUT HANDLING
+// ═══════════════════════════════════════════════
+inputBox.addEventListener('keydown', function(e) {
+  if (testDone) { e.preventDefault(); return; }
+
+  if (!timestarted && e.key.length === 1) startTimer();
+
+  if (e.key === ' ') {
+    e.preventDefault();
+    const typed = inputBox.value.trim();
+    if (!typed) return;
+
+    wc++;
+    if (typed === words[wordIndex]) {
       cwc++;
     } else {
       wwc++;
-    }
-  }
-  
-  const elapsed = getMaxTime() - seconds;
-  const wpm = elapsed > 0 ? Math.floor((cwc / elapsed) * 60) : 0;
-  const raw  = elapsed > 0 ? Math.floor((wc / elapsed) * 60) : 0;
-  const acc  = (wc > 0) ? Math.floor((cwc / wc) * 100) : 100;
-
-  dispSpeed.textContent    = `${wpm} WPM`;
-  dispRawSpeed.textContent = `${raw} WPM`;
-  dispAccuracy.textContent = `${acc}%`;
-  dispCC.textContent       = `${cwc}`;
-  dispWC.textContent       = `${wwc}`;
-
-  inputBox.disabled = true;
-
-}
-
-function reset(){
-  num = Math.floor(Math.random() * paras.length);
-  const Para = document.querySelector('.para');
-  Para.textContent = paras[num];
-  wc=0;
-  cwc=0;
-  wwc=0;
-  i=0;
-  userWord="";
-  seconds=0;
-  timestarted=false;
-  clearInterval(timer);
-  inputBox.value = "";
-  updatespeed();
-  
-  const selected = document.querySelector(".select-time.selected");
-  if(selected) counter.textContent = selected.textContent;
-  else counter.textContent = "1:00"; 
-  
-  inputBox.disabled = false;
-}
-
-function Test(event){
-  let words = paras[num].trim().split(/\s+/);
-  
-
-  if(event.key === " "){
-    let typed = userWord.trim();
-    
-    if(typed === words[i]){
-      wc++;
-      cwc++;
-      updatespeed();
-    }
-    else{
-      wwc++;
-      wc++;
+      if (settings.errorFlash) {
+        inputBox.classList.add('error-highlight');
+        setTimeout(() => inputBox.classList.remove('error-highlight'), 300);
+      }
     }
 
-    inputBox.value = "";
-    i++;
-    userWord = "";
-    
-    if(i >= words.length){
-      endTest();
-    }
+    inputBox.value = '';
+    wordIndex++;
+
+    // clear old word highlight
+    document.querySelectorAll('.word').forEach((w, wi) => {
+      w.className = 'word' + (wi === wordIndex ? ' current-word' : '');
+    });
+
+    updateLiveWpm();
+
+    if (wordIndex >= words.length) endTest();
   }
-  else if(event.key.length === 1){
-    userWord += event.key;
-  }
+});
+
+inputBox.addEventListener('input', function() {
+  if (testDone) return;
+  updateHighlight(inputBox.value);
+});
+
+// Esc to reset
+document.addEventListener('keydown', e => { if (e.key === 'Escape') reset(); });
+resetBtn.addEventListener('click', reset);
+
+// ═══════════════════════════════════════════════
+//  SETTINGS WIRING
+// ═══════════════════════════════════════════════
+
+// Generic exclusive button group helper
+function wireGroup(groupId, onChange) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      onChange(btn);
+    });
+  });
 }
 
-function updatespeed(){
-  const elapsed = getMaxTime() - seconds;
-  if(elapsed > 0){
-    speed.textContent = `${Math.floor((cwc / elapsed) * 60)} WPM`;
-  }
-  else{
-    speed.textContent = "0 WPM";
-  }
-}
+// Duration
+wireGroup('durationGroup', btn => {
+  settings.duration = parseInt(btn.dataset.val);
+  reset();
+  showToast(`Duration: ${btn.textContent}`);
+});
 
-let paras = [
-  `The quick brown fox jumps over the lazy dog.
-  Practice every day to improve your typing speed.`,
+// Highlight style
+wireGroup('highlightGroup', btn => {
+  settings.highlight = btn.dataset.mode;
+  renderPara();
+  showToast(`Highlight: ${btn.textContent}`);
+});
 
-  `Coding becomes easier when you understand the logic.
-  Patience and consistency are the keys to learning.`,
-  
-  `A small step taken daily creates big progress.
-  Focus on accuracy before chasing speed.`,
-  
-  `Learning to type faster can save a lot of time.
-  Keep your fingers on the home row keys.`,
-  
-  `Great programmers are made through practice.
-  Debugging teaches more than writing code.`,
-  
-  `Technology is changing the world every day.
-  Curiosity keeps the mind sharp and active.`,
-  
-  `The internet connects people across the globe.
-  Knowledge is only a few clicks away.`,
-  
-  `Reading improves vocabulary and thinking skills.
-  Writing helps express ideas clearly.`,
-  
-  `Consistency beats motivation in the long run.
-  Build habits that support your goals.`,
-  
-  `Every challenge is an opportunity to grow.
-  Believe in your ability to learn.`
-];
+// Error flash
+wireGroup('errorGroup', btn => {
+  settings.errorFlash = btn.dataset.val === 'on';
+  showToast(`Error flash: ${btn.textContent}`);
+});
 
+// Word list
+wireGroup('wordsGroup', btn => {
+  settings.wordList = btn.dataset.val;
+  reset();
+  showToast(`Words: ${btn.textContent}`);
+});
 
+// Punctuation
+wireGroup('punctGroup', btn => {
+  settings.punctuation = btn.dataset.val === 'on';
+  reset();
+  showToast(`Punctuation: ${btn.textContent}`);
+});
 
+// Numbers
+wireGroup('numbersGroup', btn => {
+  settings.numbers = btn.dataset.val === 'on';
+  reset();
+  showToast(`Numbers: ${btn.textContent}`);
+});
 
+// Show WPM
+wireGroup('wpmGroup', btn => {
+  settings.showWpm = btn.dataset.val === 'show';
+  wpmChip.style.opacity = settings.showWpm ? '1' : '0';
+  showToast(`WPM: ${btn.textContent}`);
+});
+
+// Show Timer
+wireGroup('timerGroup', btn => {
+  settings.showTimer = btn.dataset.val === 'show';
+  counterChip.style.opacity = settings.showTimer ? '1' : '0';
+  showToast(`Timer: ${btn.textContent}`);
+});
+
+// Language
+document.getElementById('langSelect').addEventListener('change', function() {
+  settings.language = this.value;
+  reset();
+  showToast(`Language: ${this.options[this.selectedIndex].text}`);
+});
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+reset();
